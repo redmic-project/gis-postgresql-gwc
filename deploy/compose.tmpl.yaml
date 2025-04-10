@@ -1,0 +1,46 @@
+services:
+  postgres-gwc:
+    image: ${IMAGE_NAME:-postgres}:${IMAGE_TAG:-alpine}
+    command: >
+      -c work_mem=${WORK_MEM}
+      -c max_wal_size=${MAX_WAL_SIZE}
+    environment:
+      POSTGRES_USER:
+      POSTGRES_PASSWORD:
+      POSTGRES_DB:
+      PGDATA:
+      POSTGRES_INITDB_WALDIR:
+    networks:
+      postgres-gwc-net:
+        aliases:
+          - db
+    volumes:
+      - data-vol:${PGDATA}
+      - wal-vol:${POSTGRES_INITDB_WALDIR}
+    healthcheck:
+      test: pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB} -h localhost
+      interval: ${HEALTHCHECK_INTERVAL:-30s}
+      timeout: ${HEALTHCHECK_TIMEOUT:-15s}
+      retries: ${HEALTHCHECK_RETRIES:-5}
+      start_period: ${HEALTHCHECK_START_PERIOD:-2m}
+    stop_grace_period: ${STOP_GRACE_PERIOD:-1m}
+    deploy:
+      mode: replicated
+      replicas: ${REPLICAS:-1}
+      restart_policy:
+        delay: ${RESTART_DELAY:-5s}
+      update_config:
+        delay: ${UPDATE_DELAY:-2m}
+      resources:
+        limits:
+          cpus: '${RESOURCES_LIMITS_CPUS:-1}'
+          memory: ${RESOURCES_LIMITS_MEMORY:-256M}
+        reservations:
+          cpus: '${RESOURCES_RESERVATIONS_CPUS:-0.1}'
+          memory: ${RESOURCES_RESERVATIONS_MEMORY:-128M}
+
+networks:
+  postgres-gwc-net:
+    name: ${POSTGRES_GWC_NET_NAME:-postgres-gwc-net}
+    driver: ${POSTGRES_GWC_NET_DRIVER:-overlay}
+    attachable: ${POSTGRES_GWC_NET_ATTACHABLE:-true}
