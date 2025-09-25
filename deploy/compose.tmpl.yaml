@@ -12,8 +12,6 @@ services:
       POSTGRES_INITDB_WALDIR:
     networks:
       postgres-gwc-net:
-        aliases:
-          - db
     volumes:
       - data-vol:${PGDATA}
       - wal-vol:${POSTGRES_INITDB_WALDIR}
